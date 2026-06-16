@@ -3,9 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello World</title>
+    <meta name="description" content="1pxc - Blog">
+    <title>1pxc</title>
+    <style>
+        /* ===========================
+             CSS Variables / Theme
+             =========================== */
+        :root {
+            --bg: #0d0d0d;
+            --surface: #1a1a1a;
+            --surface-hover: #242424;
+            --text: #e0e0e0;
+            --text-muted: #888;
+            --accent: #64b5f6;
+            --accent-dim: rgba(100, 181, 246, 0.12);
+            --border: #2a2a2a;
+            --radius: 8px;
+            --max-w: 680px;
+            --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        /* ===========================
+             Reset & Base
+             =========================== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        a:hover { opacity: 0.75; }
+
+        /* ===========================
+             Layout
+             =========================== */
+        .container {
+            max-width: var(--max-w);
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===========================
+             Navigation
+             =========================== */
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            background: rgba(13, 13, 13, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+        }
+        .nav-logo {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text);
+            letter-spacing: -0.5px;
+        }
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover {
+            color: var(--text);
+            opacity: 1;
+        }
+
+        /* ===========================
+             Blog List
+             =========================== */
+        .blog-list {
+            padding: 80px 0 64px;
+        }
+        .blog-list .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 32px;
+            font-family: var(--font-mono);
+        }
+
+        .post-item {
+            display: block;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            transition: padding 0.2s;
+        }
+        .post-item:first-of-type {
+            border-top: 1px solid var(--border);
+        }
+        .post-item:hover {
+            padding-left: 12px;
+        }
+        .post-item .post-date {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .post-item .post-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .post-item .post-excerpt {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            line-clamp: 2;
+            overflow: hidden;
+        }
+        .post-item:hover .post-title {
+            color: var(--accent);
+        }
+
+        /* ===========================
+             Footer
+             =========================== */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 32px 0;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ===========================
+             Responsive
+             =========================== */
+        @media (max-width: 600px) {
+            .blog-list { padding: 48px 0 40px; }
+            .post-item .post-title { font-size: 16px; }
+        }
+    </style>
 </head>
 <body>
-    <p>helloworld</p>
+
+    <!-- ==================== Navigation ==================== -->
+    <nav class="nav">
+        <div class="container">
+            <a href="#" class="nav-logo">1pxc</a>
+            <ul class="nav-links">
+                <li><a href="/">Blog</a></li>
+                <li><a href="/projects/">Projects</a></li>
+                <li><a href="https://github.com/1pxc" target="_blank" rel="noopener">GitHub</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- ==================== Blog List ==================== -->
+    <main class="blog-list">
+        <div class="container">
+            <h1 class="section-title">/ Blog</h1>
+
+            <!-- 在此添加新文章，复制 .post-item 块即可 -->
+            <article>
+                <a href="#" class="post-item">
+                    <div class="post-date">2026-06-16</div>
+                    <h2 class="post-title">Hello World</h2>
+                    <p class="post-excerpt">这是第一篇博客文章。从这里开始记录想法、技术与生活。</p>
+                </a>
+            </article>
+
+        </div>
+    </main>
+
+    <!-- ==================== Footer ==================== -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 1pxc</p>
+        </div>
+    </footer>
+
 </body>
 </html>
