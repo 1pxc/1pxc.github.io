@@ -33,6 +33,10 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             font-family: var(--font-sans);
             background: var(--bg);
@@ -40,6 +44,7 @@
             line-height: 1.7;
             font-size: 16px;
             -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
         }
 
         a {
@@ -49,9 +54,6 @@
         }
         a:hover { opacity: 0.75; }
 
-        /* ===========================
-             Layout
-             =========================== */
         .container {
             max-width: var(--max-w);
             margin: 0 auto;
@@ -62,12 +64,17 @@
              Navigation
              =========================== */
         .nav {
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 10;
+            left: 0;
+            right: 0;
+            z-index: 20;
             backdrop-filter: blur(12px);
-            background: rgba(13, 13, 13, 0.8);
-            border-bottom: 1px solid var(--border);
+            background: rgba(13, 13, 13, 0);
+            border-bottom: 1px solid transparent;
+        }
+        .nav.visible {
+            backdrop-filter: blur(12px);
         }
         .nav .container {
             display: flex;
@@ -80,6 +87,8 @@
             font-size: 18px;
             color: var(--text);
             letter-spacing: -0.5px;
+            opacity: 0;
+            will-change: opacity, transform;
         }
         .nav-links {
             display: flex;
@@ -98,12 +107,92 @@
         }
 
         /* ===========================
+             Hero / Globe Section
+             =========================== */
+        .hero {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            min-height: 600px;
+            overflow: hidden;
+            background: radial-gradient(ellipse at 75% 50%, #0f1a2e 0%, var(--bg) 60%);
+        }
+
+        #globe-canvas {
+            position: absolute;
+            top: 50%;
+            right: -200px;
+            transform: translateY(-50%);
+            width: 700px;
+            height: 700px;
+            pointer-events: auto;
+            cursor: grab;
+        }
+        #globe-canvas:active {
+            cursor: grabbing;
+        }
+
+        .hero-content {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            padding: 0 64px;
+            z-index: 2;
+            pointer-events: none;
+            will-change: transform, opacity;
+        }
+        .hero-content h1 {
+            font-size: clamp(48px, 8vw, 80px);
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            color: var(--text);
+            will-change: transform, opacity;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: var(--font-mono);
+            letter-spacing: 1px;
+            animation: float 2s ease-in-out infinite;
+            pointer-events: none;
+            will-change: opacity;
+        }
+        .scroll-indicator .arrow {
+            width: 20px;
+            height: 20px;
+            border-right: 2px solid var(--text-muted);
+            border-bottom: 2px solid var(--text-muted);
+            transform: rotate(45deg);
+            opacity: 0.6;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(8px); }
+        }
+
+        /* ===========================
              Blog List
              =========================== */
-        .blog-list {
-            padding: 80px 0 64px;
+        .blog-section {
+            position: relative;
+            z-index: 5;
+            background: var(--bg);
+            padding: 64px 0 128px;
+            min-height: 80vh;
         }
-        .blog-list .section-title {
+        .blog-section .section-title {
             font-size: 13px;
             font-weight: 600;
             text-transform: uppercase;
@@ -117,7 +206,7 @@
             display: block;
             padding: 20px 0;
             border-bottom: 1px solid var(--border);
-            transition: padding 0.2s;
+            transition: padding 0.3s;
         }
         .post-item:first-of-type {
             border-top: 1px solid var(--border);
@@ -137,6 +226,7 @@
             color: var(--text);
             margin-bottom: 6px;
             line-height: 1.4;
+            transition: color 0.2s;
         }
         .post-item .post-excerpt {
             font-size: 14px;
@@ -156,6 +246,9 @@
              Footer
              =========================== */
         .footer {
+            position: relative;
+            z-index: 5;
+            background: var(--bg);
             border-top: 1px solid var(--border);
             padding: 32px 0;
             text-align: center;
@@ -166,8 +259,23 @@
         /* ===========================
              Responsive
              =========================== */
+        @media (max-width: 768px) {
+            #globe-canvas {
+                right: -280px;
+                width: 500px;
+                height: 500px;
+            }
+            .nav-links { gap: 18px; }
+        }
         @media (max-width: 600px) {
-            .blog-list { padding: 48px 0 40px; }
+            .hero-content h1 { font-size: 42px; }
+            #globe-canvas {
+                right: -200px;
+                width: 360px;
+                height: 360px;
+                top: 45%;
+            }
+            .blog-section { padding: 40px 0; }
             .post-item .post-title { font-size: 16px; }
         }
     </style>
@@ -175,28 +283,48 @@
 <body>
 
     <!-- ==================== Navigation ==================== -->
-    <nav class="nav">
+    <nav class="nav" id="navbar">
         <div class="container">
             <a href="#" class="nav-logo">1pxc</a>
             <ul class="nav-links">
-                <li><a href="/">Blog</a></li>
+                <li><a href="#">Blog</a></li>
                 <li><a href="/projects/">Projects</a></li>
                 <li><a href="https://github.com/1pxc" target="_blank" rel="noopener">GitHub</a></li>
             </ul>
         </div>
     </nav>
 
+    <!-- ==================== Hero / Globe ==================== -->
+    <section class="hero" id="hero">
+        <canvas id="globe-canvas"></canvas>
+        <div class="hero-content">
+            <h1>1pxc</h1>
+        </div>
+        <div class="scroll-indicator">
+            <span>SCROLL</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
+
     <!-- ==================== Blog List ==================== -->
-    <main class="blog-list">
+    <main class="blog-section" id="blog">
         <div class="container">
-            <h1 class="section-title">/ Blog</h1>
+            <h2 class="section-title">/ Blog</h2>
 
             <!-- 在此添加新文章，复制 .post-item 块即可 -->
             <article>
-                <a href="#" class="post-item">
+                <a href="posts/hello-world.html" class="post-item">
                     <div class="post-date">2026-06-16</div>
                     <h2 class="post-title">Hello World</h2>
                     <p class="post-excerpt">这是第一篇博客文章。从这里开始记录想法、技术与生活。</p>
+                </a>
+            </article>
+
+            <article>
+                <a href="#" class="post-item">
+                    <div class="post-date">—</div>
+                    <h2 class="post-title">即将到来</h2>
+                    <p class="post-excerpt">更多文章正在筹备中…</p>
                 </a>
             </article>
 
@@ -210,5 +338,264 @@
         </div>
     </footer>
 
+    <!-- ==================== Three.js Globe ==================== -->
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        const canvas = document.getElementById('globe-canvas');
+        const hero = document.getElementById('hero');
+
+        // ── Scene Setup ──
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.setSize(canvas.clientWidth, canvas.clientHeight, false);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        camera.position.z = 3.2;
+
+        // ── Stars Background ──
+        const starsGeo = new THREE.BufferGeometry();
+        const starsCount = 800;
+        const starsPos = new Float32Array(starsCount * 3);
+        for (let i = 0; i < starsCount * 3; i += 3) {
+            starsPos[i] = (Math.random() - 0.5) * 10;
+            starsPos[i + 1] = (Math.random() - 0.5) * 6;
+            starsPos[i + 2] = (Math.random() - 0.5) * 3 - 0.5;
+        }
+        starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPos, 3));
+        const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.003, transparent: true, opacity: 0.6 });
+        const stars = new THREE.Points(starsGeo, starsMat);
+        scene.add(stars);
+
+        // ── Globe Group ──
+        const globeGroup = new THREE.Group();
+        scene.add(globeGroup);
+
+        // Earth sphere
+        const earthGeo = new THREE.SphereGeometry(1, 72, 54);
+
+        // Generate procedural Earth-like texture via Canvas (fallback + unique style)
+        const texCanvas = document.createElement('canvas');
+        texCanvas.width = 1024;
+        texCanvas.height = 512;
+        const ctx = texCanvas.getContext('2d');
+
+        // Base ocean gradient
+        const oceanGrad = ctx.createRadialGradient(0, 0, 100, 0, 0, 1024);
+        oceanGrad.addColorStop(0, '#0a1628');
+        oceanGrad.addColorStop(1, '#0d1f3c');
+        ctx.fillStyle = oceanGrad;
+        ctx.fillRect(0, 0, 1024, 512);
+
+        // Grid lines (latitude / longitude)
+        ctx.strokeStyle = 'rgba(100, 160, 220, 0.12)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 1024; i += 64) ctx.strokeRect(i, 0, 0, 512);
+        for (let i = 0; i < 512; i += 64) ctx.strokeRect(0, i, 1024, 0);
+
+        // Scattered "continent" blobs
+        ctx.fillStyle = 'rgba(100, 180, 240, 0.15)';
+        const blobs = [
+            [120, 120, 80], [140, 140, 60], [100, 160, 50],
+            [180, 200, 70], [200, 180, 55], [160, 220, 45],
+            [400, 100, 90], [440, 130, 70], [380, 150, 60],
+            [350, 200, 55], [420, 220, 65],
+            [500, 300, 80], [520, 280, 60], [480, 320, 50],
+            [600, 150, 75], [620, 180, 55], [580, 200, 60],
+            [700, 250, 85], [720, 280, 65], [680, 300, 55],
+            [800, 120, 70], [820, 150, 50],
+        ];
+        blobs.forEach(([x, y, r]) => {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+        });
+
+        const earthTex = new THREE.CanvasTexture(texCanvas);
+        earthTex.colorSpace = THREE.SRGBColorSpace;
+
+        const earthMat = new THREE.MeshStandardMaterial({
+            map: earthTex,
+            roughness: 0.6,
+            metalness: 0.1,
+        });
+        const earth = new THREE.Mesh(earthGeo, earthMat);
+        globeGroup.add(earth);
+
+        // Wireframe overlay
+        const wireGeo = new THREE.SphereGeometry(1.005, 36, 24);
+        const wireMat = new THREE.MeshBasicMaterial({
+            color: 0x3a5f8a,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.08,
+        });
+        const wireframe = new THREE.Mesh(wireGeo, wireMat);
+        globeGroup.add(wireframe);
+
+        // Outer glow ring
+        const ringGeo = new THREE.TorusGeometry(1.06, 0.005, 16, 100);
+        const ringMat = new THREE.MeshBasicMaterial({ color: 0x4488cc, transparent: true, opacity: 0.5 });
+        const ring = new THREE.Mesh(ringGeo, ringMat);
+        ring.rotation.x = Math.PI / 2.8;
+        globeGroup.add(ring);
+
+        // Second ring
+        const ring2Geo = new THREE.TorusGeometry(1.08, 0.004, 16, 100);
+        const ring2Mat = new THREE.MeshBasicMaterial({ color: 0x4488cc, transparent: true, opacity: 0.3 });
+        const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
+        ring2.rotation.x = -Math.PI / 2.8;
+        ring2.rotation.y = Math.PI / 4;
+        globeGroup.add(ring2);
+
+        // ── Lighting ──
+        const ambientLight = new THREE.AmbientLight(0x334466, 1.5);
+        scene.add(ambientLight);
+        const sunLight = new THREE.DirectionalLight(0xffffff, 2.5);
+        sunLight.position.set(5, 3, 5);
+        scene.add(sunLight);
+        const fillLight = new THREE.DirectionalLight(0x3366aa, 0.8);
+        fillLight.position.set(-3, -1, -3);
+        scene.add(fillLight);
+
+        // ── Mouse / Touch Drag Rotation ──
+        let isDragging = false;
+        let prevX = 0, prevY = 0;
+        let velocityX = 0, velocityY = 0;
+        let rotX = 0.4, rotY = 0;
+        let autoRotate = true;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            isDragging = true;
+            autoRotate = false;
+            prevX = e.clientX;
+            prevY = e.clientY;
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - prevX;
+            const dy = e.clientY - prevY;
+            rotY += dx * 0.005;
+            rotX += dy * 0.005;
+            rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+            velocityX = dx * 0.005;
+            velocityY = dy * 0.005;
+            prevX = e.clientX;
+            prevY = e.clientY;
+        });
+
+        window.addEventListener('pointerup', () => {
+            isDragging = false;
+            // Resume auto-rotate after a delay
+            setTimeout(() => { if (!isDragging) autoRotate = true; }, 2000);
+        });
+
+        // ── Resize Handler ──
+        function resize() {
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            if (canvas.width !== w || canvas.height !== h) {
+                renderer.setSize(w, h, false);
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+            }
+        }
+        window.addEventListener('resize', resize);
+
+        // ── Scroll: Nav visibility & Logo transition ──
+        const navbar = document.getElementById('navbar');
+        const navLogo = navbar.querySelector('.nav-logo');
+        const heroH1 = document.querySelector('.hero-content h1');
+        const scrollInd = document.querySelector('.scroll-indicator');
+
+        function onScroll() {
+            const scrollY = window.scrollY;
+            const heroH = hero.clientHeight;
+
+            // ── Nav background ──
+            // Start fading in at 30% hero height, fully visible by 60%
+            const navBgProgress = Math.min(Math.max((scrollY - heroH * 0.3) / (heroH * 0.3), 0), 1);
+            if (navBgProgress > 0) {
+                navbar.classList.add('visible');
+                navbar.style.background = `rgba(13, 13, 13, ${0.85 * navBgProgress})`;
+                navbar.style.borderBottomColor = `rgba(42, 42, 42, ${navBgProgress})`;
+            } else {
+                navbar.classList.remove('visible');
+                navbar.style.background = '';
+                navbar.style.borderBottomColor = '';
+            }
+
+            // ── Logo crossfade (hero → nav) ──
+            // Full overlap zone: 35% → 65% of hero height
+            const fadeProgress = Math.min(Math.max((scrollY - heroH * 0.35) / (heroH * 0.3), 0), 1);
+
+            // Ease-out curve for hero logo shrink
+            const eased = 1 - Math.pow(1 - fadeProgress, 2.5);
+
+            // Hero logo: shrink from 1 → 0.22, fade from 1 → 0
+            const heroScale = 1 - eased * 0.78;
+            const heroOpacity = 1 - eased;
+            heroH1.style.transform = `scale(${heroScale.toFixed(3)})`;
+            heroH1.style.opacity = heroOpacity.toFixed(3);
+
+            // Nav logo: fade in continuously (opacity driven by JS, not CSS class)
+            const navOpacity = eased;
+            navLogo.style.opacity = navOpacity.toFixed(3);
+            navLogo.style.transform = `translateY(${((1 - navOpacity) * -8).toFixed(1)}px)`;
+
+            // Scroll indicator: fade out early
+            if (scrollInd) {
+                scrollInd.style.opacity = Math.max(0, 1 - fadeProgress * 2.5).toFixed(3);
+            }
+
+            // Nav background (complete at 100% fade)
+            if (fadeProgress > 0.01) {
+                navbar.classList.add('visible');
+            } else {
+                navbar.classList.remove('visible');
+            }
+        }
+        window.addEventListener('scroll', onScroll, { passive: true });
+        onScroll();
+
+        // ── Animation Loop ──
+        function animate(time) {
+            requestAnimationFrame(animate);
+
+            resize();
+
+            // Auto-rotate or inertia
+            if (autoRotate) {
+                rotY += 0.002;
+                velocityX *= 0.95;
+                velocityY *= 0.95;
+            } else {
+                rotY += velocityX;
+                rotX += velocityY;
+                velocityX *= 0.95;
+                velocityY *= 0.95;
+                rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+            }
+
+            globeGroup.rotation.y = rotY;
+            globeGroup.rotation.x = rotX;
+
+            // Subtle star drift
+            stars.rotation.y += 0.0001;
+            stars.rotation.x += 0.00005;
+
+            // Ring rotations
+            ring.rotation.z += 0.003;
+            ring2.rotation.z -= 0.002;
+
+            renderer.render(scene, camera);
+        }
+        requestAnimationFrame(animate);
+    </script>
 </body>
 </html>
