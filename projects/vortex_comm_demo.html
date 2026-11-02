@@ -3,10 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>涡旋光束光通信 — 串行转128通道并行编码演示</title>
+<meta name="description" content="涡旋光束光通信加密演示 — 1pxc">
+<meta name="theme-color" content="#07080c">
+<title>涡旋光束光通信 — 1pxc</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
 <style>
   :root {
-    --bg: #0a0e1a;
+    --bg: #07080c;
     --panel: #111827;
     --border: #1e293b;
     --accent: #6366f1;
@@ -29,14 +33,17 @@
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
-    padding: 24px;
+    line-height: 1.5;
+    padding: 36px 0 48px;
   }
 
   /* ── Header ── */
   header {
-    text-align: center;
-    margin-bottom: 32px;
+    text-align: left;
+    width: min(1400px, calc(100% - 48px));
+    margin: 0 auto 28px;
   }
+  header .back { margin-bottom: 14px; }
   header h1 {
     font-size: 1.6rem;
     font-weight: 700;
@@ -52,7 +59,7 @@
   }
 
   /* ── Layout ── */
-  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: min(1400px, calc(100% - 48px)); margin: 0 auto; }
   @media(max-width: 900px){ .layout { grid-template-columns: 1fr; } }
 
   /* ── Card ── */
@@ -238,9 +245,10 @@
   .error { color: #f87171; font-size: 0.82rem; margin-top: 6px; }
 </style>
 </head>
-<body>
+<body class="demo">
 
 <header>
+  <a class="back" href="index.html">Projects</a>
   <h1>涡旋光束光通信 · 串行 → 128通道并行编码</h1>
   <p>1×128 激光阵列 | 每通道携带数据值 (data) 与拓扑荷数 (k ∈ [−3, +3])</p>
 </header>
@@ -354,6 +362,14 @@
 
 </div><!-- /layout -->
 
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>© 2026 1pxc</span>
+    <span>思考、构建、记录。</span>
+    <a href="https://github.com/1pxc" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+</footer>
+
 <!-- Tooltip -->
 <div id="tooltip"></div>
 
@@ -461,15 +477,15 @@ function encode() {
   frames = serialToParallel128(values);
   currentFrame = 0;
 
-  renderStats();
-  renderStream();
-  renderGrid();
-  renderVortex();
-  renderDecode();
-
   ['statsCard','arrowRow','streamCard','gridCard','vortexCard','decodeCard'].forEach(id=>{
     document.getElementById(id).style.display = '';
   });
+
+  renderStats();
+  renderStream();
+  renderGrid();
+  renderDecode();
+  requestAnimationFrame(() => renderVortex());
 }
 
 // ── Stats ──
@@ -589,6 +605,7 @@ function renderVortex() {
   const ctx = canvas.getContext('2d');
   const W = canvas.offsetWidth;
   const H = 280;
+  if (!W) return;
   canvas.width = W; canvas.height = H;
 
   const frame = frames[currentFrame];

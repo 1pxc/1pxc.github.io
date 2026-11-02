@@ -3,126 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="1pxc - Projects">
+    <meta name="description" content="Projects — 1pxc">
+    <meta name="theme-color" content="#07080c">
     <title>Projects — 1pxc</title>
-    <style>
-        :root {
-            --bg: #0d0d0d;
-            --surface: #1a1a1a;
-            --surface-hover: #242424;
-            --text: #e0e0e0;
-            --text-muted: #888;
-            --accent: #64b5f6;
-            --accent-dim: rgba(100, 181, 246, 0.12);
-            --border: #2a2a2a;
-            --radius: 8px;
-            --max-w: 680px;
-            --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
-            --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-        }
-
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: var(--font-sans);
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            font-size: 16px;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        a { color: var(--accent); text-decoration: none; transition: opacity 0.2s; }
-        a:hover { opacity: 0.75; }
-
-        .container { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
-
-        .nav {
-            position: sticky; top: 0; z-index: 10;
-            backdrop-filter: blur(12px);
-            background: rgba(13, 13, 13, 0.8);
-            border-bottom: 1px solid var(--border);
-        }
-        .nav .container { display: flex; align-items: center; justify-content: space-between; height: 56px; }
-        .nav-logo { font-weight: 700; font-size: 18px; color: var(--text); letter-spacing: -0.5px; }
-        .nav-links { display: flex; gap: 28px; list-style: none; }
-        .nav-links a { color: var(--text-muted); font-size: 14px; font-weight: 500; transition: color 0.2s; }
-        .nav-links a:hover { color: var(--text); opacity: 1; }
-        .nav-links a.active { color: var(--text); }
-
-        .section { padding: 80px 0 64px; }
-        .section-title {
-            font-size: 13px; font-weight: 600; text-transform: uppercase;
-            letter-spacing: 2px; color: var(--text-muted);
-            margin-bottom: 32px; font-family: var(--font-mono);
-        }
-
-        .projects-grid { display: grid; gap: 12px; }
-        .project-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: var(--radius); padding: 24px;
-            transition: background 0.2s, border-color 0.2s;
-            display: block; color: inherit;
-        }
-        .project-card:hover { background: var(--surface-hover); border-color: #3a3a3a; opacity: 1; }
-        .project-card h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-        .project-card p { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
-        .project-card .meta {
-            display: flex; align-items: center; gap: 12px;
-            margin-top: 12px; font-size: 12px; color: var(--text-muted);
-            font-family: var(--font-mono);
-        }
-        .project-card .tag {
-            padding: 2px 8px; border-radius: 4px;
-            background: var(--accent-dim); color: var(--accent);
-            font-size: 11px; font-family: var(--font-sans); font-weight: 500;
-        }
-        .project-card:hover h2 { color: var(--accent); }
-
-        .footer { border-top: 1px solid var(--border); padding: 32px 0; text-align: center; color: var(--text-muted); font-size: 13px; }
-
-        @media (max-width: 600px) {
-            .section { padding: 48px 0 40px; }
-        }
-    </style>
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../assets/site.css">
 </head>
-<body>
+<body class="sub">
 
     <nav class="nav">
-        <div class="container">
-            <a href="/" class="nav-logo">1pxc</a>
+        <div class="nav-inner">
+            <a href="../index.html" class="nav-logo">1pxc</a>
             <ul class="nav-links">
-                <li><a href="/">Blog</a></li>
-                <li><a href="/projects/" class="active">Projects</a></li>
-                <li><a href="https://github.com/1pxc" target="_blank" rel="noopener">GitHub</a></li>
+                <li><a href="../index.html#blog">Blog</a></li>
+                <li><a href="index.html" aria-current="page">Projects</a></li>
+                <li><a href="https://github.com/1pxc" target="_blank" rel="noopener noreferrer">GitHub</a></li>
             </ul>
         </div>
     </nav>
 
-    <main class="section">
+    <main class="page">
         <div class="container">
-            <h1 class="section-title">/ Projects</h1>
+            <header class="page-intro">
+                <p class="kicker">Projects</p>
+                <h1>项目</h1>
+                <p class="deck">能点开的演示。</p>
+            </header>
 
-            <div class="projects-grid">
-
-                <!-- 涡旋光通信加密 Demo -->
-                <a href="vortex_comm_demo.html" class="project-card">
-                    <h2>涡旋光束光通信加密 Demo</h2>
-                    <p>基于涡旋光物理特性的128通道并行编解码加密算法交互式演示，串行数据映射至轨道角动量模态实现高维编码。</p>
-                    <div class="meta">
-                        <span class="tag">Optics</span>
-                        <span class="tag">Crypto</span>
-                        <span>2026</span>
+            <div class="stack">
+                <!-- 新项目：复制下面这个 a.work-card -->
+                <a class="work-card" href="vortex_comm_demo.html">
+                    <div class="mark" aria-hidden="true">
+                        <svg viewBox="0 0 80 80" fill="none">
+                            <circle cx="40" cy="40" r="30" stroke="currentColor" stroke-opacity="0.28"/>
+                            <circle cx="40" cy="40" r="18" stroke="currentColor" stroke-opacity="0.5"/>
+                            <path d="M40 40c8-10 16-16 26-20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            <path d="M40 40c-8 10-16 16-26 20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+                            <path d="M40 40c12 2 20 8 24 18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-opacity="0.75"/>
+                            <circle cx="40" cy="40" r="2.2" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="tags">
+                            <span>Optics</span>
+                            <span>Crypto</span>
+                            <span>2026</span>
+                        </div>
+                        <h3>涡旋光束光通信加密</h3>
+                        <p>基于涡旋光的 128 通道并行编解码。串行数据映射到轨道角动量模态，可以在页面里编码、看每一帧，并核对解码结果。</p>
+                        <span class="work-go">打开演示</span>
                     </div>
                 </a>
-
+                <a class="work-card" href="fpga.html">
+                    <div class="mark" aria-hidden="true">
+                        <svg viewBox="0 0 80 80" fill="none">
+                            <rect x="16" y="18" width="14" height="44" rx="3" stroke="currentColor" stroke-opacity="0.45"/>
+                            <circle cx="23" cy="30" r="2.6" fill="currentColor"/>
+                            <circle cx="23" cy="40" r="2.6" fill="currentColor" fill-opacity="0.55"/>
+                            <circle cx="23" cy="50" r="2.6" fill="currentColor" fill-opacity="0.28"/>
+                            <path d="M44 26h16M44 40h16M44 54h16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+                            <path d="M44 26v14M60 26v14M44 40v14M60 40v14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="tags">
+                            <span>FPGA</span>
+                            <span>Verilog</span>
+                            <span>2026</span>
+                        </div>
+                        <h3>FPGA设计自主实验</h3>
+                        <p>Cyclone IV E 上的两件 Verilog 实验。交通灯含直行、左转、黄灯、倒计时和紧急状态；计算器做加减乘除与开方，并把结果送到八位数码管。</p>
+                        <span class="work-go">打开演示</span>
+                    </div>
+                </a>
             </div>
         </div>
     </main>
 
     <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 1pxc</p>
+        <div class="container footer-inner">
+            <span>© 2026 1pxc</span>
+            <span>思考、构建、记录。</span>
+            <a href="https://github.com/1pxc" target="_blank" rel="noopener noreferrer">GitHub</a>
         </div>
     </footer>
 

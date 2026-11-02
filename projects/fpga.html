@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="十字路口交通灯控制器与八位电子计算器，两件 Cyclone IV E 上的 Verilog 实验。">
+<meta name="theme-color" content="#07080c">
+<title>FPGA设计自主实验 — 1pxc</title>
+<link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../assets/site.css">
+<style>
+  :root {
+    --surface-hover: #1c2230;
+    --accent-dim: rgba(100, 181, 246, 0.12);
+    --red: #ff5a4f;
+    --green: #3ddc78;
+    --yellow: #ffd23a;
+    --mono: var(--font-mono);
+    --sans: var(--font-sans);
+  }
+  html { scroll-padding-top: 72px; }
+  h1, h2, h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0;
+    color: var(--text);
+    letter-spacing: -0.4px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  .lab a:hover { opacity: 0.75; }
+  button, input { font: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .sr {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0);
+    border: 0;
+  }
+  .local-nav {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    background: rgba(7, 8, 12, 0.86);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(12px);
+  }
+  .local-nav .wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-height: 48px;
+    flex-wrap: wrap;
+    padding: 8px 0;
+  }
+  .section-links { display: flex; gap: 4px; }
+  .section-links a {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 999px;
+  }
+  .section-links a:hover {
+    color: var(--text);
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .wrap { width: min(920px, calc(100% - 48px)); margin: 0 auto; }
+  .lab section { scroll-margin-top: 72px; padding: 48px 0 8px; }
+  .lab-hero { padding: 40px 0 8px; }
+  .kicker {
+    margin: 0 0 14px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 1px;
+    text-transform: none;
+  }
+  h1 { font-size: clamp(32px, 5vw, 42px); font-weight: 800; letter-spacing: -1px; max-width: 16em; }
+  .lab-lede { max-width: 68ch; margin: 16px 0 0; color: var(--text); font-size: 16px; line-height: 1.7; }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  .meta li { border-left: 1px solid var(--line); padding-left: 12px; }
+  h2 { font-size: 28px; padding-top: 8px; }
+  .num {
+    display: block;
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+  }
+  .num::before { content: "/ "; }
+  .intro { max-width: 68ch; margin: 1em 0 0; color: var(--muted); }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 28px;
+    align-items: start;
+    margin-top: 22px;
+  }
+  .stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .road {
+    position: absolute;
+    background: #2b3138;
+  }
+  .road.h {
+    left: 0; right: 0; top: 50%;
+    height: 24%;
+    transform: translateY(-50%);
+  }
+  .road.v {
+    top: 0; bottom: 0; left: 50%;
+    width: 24%;
+    transform: translateX(-50%);
+  }
+  .road.h::after, .road.v::after {
+    content: "";
+    position: absolute;
+    background: repeating-linear-gradient(90deg, rgba(255, 208, 90, 0.8) 0 12px, transparent 12px 24px);
+  }
+  .road.h::after { left: 0; right: 0; top: 50%; height: 2px; }
+  .road.v::after {
+    top: 0; bottom: 0; left: 50%; width: 2px;
+    background: repeating-linear-gradient(180deg, rgba(255, 208, 90, 0.8) 0 12px, transparent 12px 24px);
+  }
+  .tag {
+    position: absolute;
+    z-index: 1;
+    color: #c9c1b4;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+  }
+  .tag-a { left: calc(50% + 14%); top: calc(50% + 20%); }
+  .tag-b { left: auto; right: 18px; top: calc(50% + 10%); }
+  .head {
+    position: absolute;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    background: #0c0e11;
+    border: 1px solid #30363d;
+    border-radius: 14px;
+  }
+  .head small {
+    color: #b7b1a6;
+    font-size: 11px;
+    text-align: center;
+    letter-spacing: 0.06em;
+  }
+  .head.a {
+    flex-direction: row;
+    align-items: center;
+    left: 50%;
+    top: 6%;
+    transform: translateX(-50%);
+  }
+  .head.b { left: 6%; top: 50%; transform: translateY(-50%); }
+  .lamp {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #1a1f24;
+    box-shadow: inset 0 0 0 1px #000;
+    display: grid;
+    place-items: center;
+    color: transparent;
+  }
+  .lamp[data-kind="L"] { color: #465058; }
+  .lamp svg { width: 15px; height: 15px; }
+  .lamp.on[data-kind="R"] { background: var(--red); box-shadow: 0 0 14px var(--red); }
+  .lamp.on[data-kind="Y"] { background: var(--yellow); box-shadow: 0 0 14px var(--yellow); }
+  .lamp.on[data-kind="G"] { background: var(--green); box-shadow: 0 0 14px var(--green); }
+  .lamp.on[data-kind="L"] {
+    background: #1f8a45;
+    color: #f3fff7;
+    box-shadow: 0 0 14px var(--green);
+  }
+  .timer {
+    position: absolute;
+    z-index: 3;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    padding: 10px 12px 8px;
+    background: #0c0e11;
+    border-radius: 12px;
+    border: 1px solid #30363d;
+  }
+  .timer span { color: #8d867c; font-size: 12px; padding-bottom: 2px; }
+  .panel h3 { font-size: 18px; font-weight: 600; margin-bottom: 8px; letter-spacing: 0; }
+  .status { min-height: 3.2em; margin: 0 0 8px; }
+  .constraint { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  button {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--surface-hover); }
+  button:disabled { opacity: 0.4; cursor: default; }
+  button[aria-pressed="true"] { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  button.danger[aria-pressed="true"] { background: rgba(255, 90, 79, 0.16); border-color: var(--red); color: var(--red); }
+  .params { display: grid; gap: 6px; }
+  .param {
+    display: grid;
+    grid-template-columns: 1fr auto auto auto auto;
+    gap: 6px;
+    align-items: center;
+  }
+  .param .pick {
+    border-radius: 8px;
+    text-align: left;
+    padding: 6px 10px;
+  }
+  .param .val {
+    min-width: 2ch;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-family: Consolas, "Cascadia Mono", monospace;
+  }
+  .param .step {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border-radius: 8px;
+  }
+  .speed {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 14px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .speed input { flex: 1; accent-color: var(--accent); }
+  .bar {
+    display: flex;
+    width: 100%;
+    min-height: 42px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .bar span {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 4px 6px;
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .bar em { font-style: normal; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .bar .now { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .k-G { background: #143028; }
+  .k-L { background: #102820; }
+  .k-Y { background: #332c16; }
+  .prose { max-width: 78ch; }
+  .prose p { margin: 0 0 1em; }
+  .closing { margin: 1em 0 0; }
+  .note { margin: 56px 0 8px; max-width: 68ch; color: var(--muted); font-size: 14px; }
+  .facts { padding: 0; margin: 12px 0 0; list-style: none; }
+  .facts li { padding: 8px 0; border-top: 1px solid var(--line); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 4px; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { font-weight: 600; color: var(--muted); font-size: 13px; }
+  .mods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 14px 0;
+    padding: 0;
+    list-style: none;
+  }
+  .mods li {
+    margin: 0;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .mods b { display: block; font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .mods span { display: block; margin-top: 4px; color: var(--muted); font-size: 14px; }
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 36px;
+    align-items: start;
+  }
+  #calc .device { position: static; max-width: 380px; margin: 22px 0 8px; }
+  .chassis {
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .screen {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 12px 10px;
+    margin-bottom: 12px;
+    min-height: 132px;
+  }
+  #expr {
+    margin: 0 0 8px;
+    min-height: 1.3em;
+    font-family: var(--mono);
+    font-size: 22px;
+    letter-spacing: 0;
+    color: var(--accent);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .caption { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+  .keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .keys button {
+    height: 48px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-hover);
+    color: var(--text);
+    padding: 0;
+  }
+  .keys button:hover { background: #2c2c2c; }
+  .keys button:active { transform: translateY(1px); }
+  .keys .op { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
+  .keys .eq { background: var(--accent); color: #0d0d0d; border-color: var(--accent); font-weight: 700; }
+  .keys .ac { color: var(--red); }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .examples button {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--line);
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 4px 10px;
+  }
+  .examples button:hover { color: var(--accent); border-color: var(--accent); }
+  .digits { display: flex; gap: 7px; }
+  .digit { position: relative; width: 26px; height: 46px; flex: none; }
+  .digit .seg { position: absolute; background: #2a2a2a; border-radius: 2px; }
+  .screen .digit .seg.on { background: var(--accent); box-shadow: 0 0 8px rgba(100, 181, 246, 0.75); }
+  .timer .digit .seg { background: #2a2420; }
+  .timer .digit .seg.on { background: #ff5a3c; box-shadow: 0 0 8px rgba(255, 90, 60, 0.9); }
+  .digit .a { left: 5px; top: 0; width: 16px; height: 4px; }
+  .digit .g { left: 5px; top: 21px; width: 16px; height: 4px; }
+  .digit .d { left: 5px; bottom: 0; width: 16px; height: 4px; }
+  .digit .f, .digit .b, .digit .e, .digit .c { width: 4px; height: 17px; }
+  .digit .f { left: 0; top: 4px; }
+  .digit .b { right: 0; top: 4px; }
+  .digit .e { left: 0; top: 25px; }
+  .digit .c { right: 0; top: 25px; }
+  .digit .dp {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    right: -6px; bottom: 1px;
+    background: #2a2a2a;
+  }
+  .screen .digit .dp.on { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin: 8px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .flow li {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  .flow li span { display: block; color: var(--muted); font-size: 12px; }
+  code { font-family: var(--mono); font-size: 0.92em; color: var(--text); }
+  @media (max-width: 860px) {
+    .grid, .split, .mods { grid-template-columns: 1fr; }
+    .device { position: static; max-width: 420px; }
+    .head, .timer { scale: 0.86; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body class="demo">
+<div class="local-nav">
+  <div class="wrap">
+    <a class="back" href="index.html">Projects</a>
+    <nav class="section-links" aria-label="实验章节">
+      <a href="#light">交通灯</a>
+      <a href="#calc">计算器</a>
+    </nav>
+  </div>
+</div>
+
+<main id="top" class="lab wrap">
+  <section class="lab-hero">
+    <p class="kicker">Cyclone IV E · EP4CE115F23C7</p>
+    <h1>FPGA设计自主实验</h1>
+    <p class="lab-lede">本页对应实验报告中的实验四与实验五。实验四是带直行、左转、黄灯过渡、倒计时、配时设置和紧急状态的双向交通灯。实验五是简易电子计算器，完成数字输入、加减乘除与平方根，并把二进制结果转换成十进制 BCD，送到八位数码管上。</p>
+    <ul class="meta">
+      <li>张亦驰 · 24027101</li>
+      <li>班级 240271</li>
+      <li>EP4CE115F23C7 · 50 MHz</li>
+      <li>Quartus II 13.0 SP1</li>
+    </ul>
+  </section>
+
+  <section id="light">
+    <h2><span class="num">04</span>交通灯控制系统</h2>
+    <p class="intro">设计具有直行、左转、黄灯过渡、倒计时显示、配时设置和紧急状态的双向交通灯控制器。状态机、分频使能、按键消抖与数码管扫描分工协作。基准时钟为 50 MHz，逻辑都在同一个时钟域内，低速事件用单拍使能触发。纵向是 A 方向，横向是 B 方向。</p>
+
+    <div class="grid">
+      <div>
+        <div class="stage" id="stage">
+          <div class="road h"></div>
+          <div class="road v"></div>
+          <span class="tag tag-a">A 主干</span>
+          <span class="tag tag-b">B 支路</span>
+          <div class="head a" aria-hidden="true">
+            <small>A</small>
+            <i class="lamp" data-side="a" data-kind="R"></i>
+            <i class="lamp" data-side="a" data-kind="Y"></i>
+            <i class="lamp" data-side="a" data-kind="G"></i>
+            <i class="lamp" data-side="a" data-kind="L"><svg viewBox="0 0 24 24"><path d="M14 5 L6 12 L14 19 M6 12 H20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+          </div>
+          <div class="head b" aria-hidden="true">
+            <small>B</small>
+            <i class="lamp" data-side="b" data-kind="R"></i>
+            <i class="lamp" data-side="b" data-kind="Y"></i>
+            <i class="lamp" data-side="b" data-kind="G"></i>
+            <i class="lamp" data-side="b" data-kind="L"><svg viewBox="0 0 24 24"><path d="M14 5 L6 12 L14 19 M6 12 H20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></i>
+          </div>
+          <div class="timer" aria-hidden="true">
+            <div class="digits" id="timerDigits"></div>
+            <span>秒</span>
+          </div>
+        </div>
+        <div class="bar" id="bar" style="margin-top:12px"></div>
+      </div>
+
+      <div class="panel">
+        <h3 id="phaseLabel">A 直行绿灯</h3>
+        <p class="constraint" id="constraint"></p>
+        <div class="row">
+          <button type="button" id="emerBtn" class="danger" aria-pressed="false">紧急</button>
+          <button type="button" id="setBtn" aria-pressed="false">配时</button>
+          <button type="button" id="runBtn">暂停</button>
+        </div>
+        <div class="params" id="params"></div>
+        <label class="speed">演示速度 <input id="speed" type="range" min="1" max="8" value="3"><b id="speedVal">3×</b></label>
+      </div>
+    </div>
+
+    <div class="prose">
+      <p>状态寄存器按下表循环。每个 1 Hz 使能让倒计时减一，计满后装载下一相位时长。A 方向有效时间为 25+10+5=40 s，此时 B 为红灯；B 方向有效时间为 10+5+5=20 s，此时 A 为红灯。默认完整周期为 60 s，任一正常相位都不会同时放行两个方向。</p>
+      <table>
+        <thead>
+          <tr><th>相位</th><th>A 方向</th><th>B 方向</th><th>时长</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>S_A_G</td><td>直行绿</td><td>红</td><td>25 s</td></tr>
+          <tr><td>S_A_L</td><td>左转绿</td><td>红</td><td>10 s</td></tr>
+          <tr><td>S_A_Y</td><td>黄</td><td>红</td><td>5 s</td></tr>
+          <tr><td>S_B_G</td><td>红</td><td>直行绿</td><td>10 s</td></tr>
+          <tr><td>S_B_L</td><td>红</td><td>左转绿</td><td>5 s</td></tr>
+          <tr><td>S_B_Y</td><td>红</td><td>黄</td><td>5 s</td></tr>
+        </tbody>
+      </table>
+      <p>2 Hz 使能每 0.5 s 翻转一次 blink，得到周期为 1 s 的闪烁方波。普通绿灯和左转灯在当前相位倒计时不大于 5 s 时受 blink 控制，黄灯在整个黄灯相位受 blink 控制。普通红灯保持常亮，只有紧急状态使两方向红灯闪烁。</p>
+      <p>配时打开时冻结正常倒计时，两方向显示红灯。绿灯限幅为 5～60 s，左转为 0～30 s，黄灯为 1～9 s；左转设为 0 时跳过该相位。长按大约每 200 ms 重复调整。紧急状态保持相位和剩余秒数，两方向只让红灯按 blink 闪烁，解除后从原来的倒计时继续。退出配时后从 A 直行绿灯重新开始。</p>
+      <p>正常模式数码管显示的是当前相位倒计时，不是对向红灯跨多个相位的总剩余时间。刚进入 A 直行绿时显示 25，B 红灯到结束还需 40 s，两者并不相等。设置模式则显示被选中的那一项配时。</p>
+      <ul class="mods">
+        <li><b>traffic_top</b><span>顶层连接、端口极性、上电复位与功能开关。</span></li>
+        <li><b>clk_div</b><span>产生 1 Hz、2 Hz、1 kHz 等周期使能。</span></li>
+        <li><b>key_debounce</b><span>增减按键消抖与长按重复，消抖约 20 ms。</span></li>
+        <li><b>traffic_core</b><span>六相位状态机、倒计时、配时与紧急控制。</span></li>
+        <li><b>seg_scan</b><span>两位十进制译码与动态扫描。</span></li>
+      </ul>
+      <p>顶层启用配时设置及左转灯。默认 LED 为高有效，按键低有效，位选低有效，数码管段选在保存的顶层参数中为高有效。上电复位大约保持 1 ms。工程在 <code>traffic_light</code>。</p>
+    </div>
+  </section>
+
+  <section id="calc">
+    <h2><span class="num">05</span>简易电子计算器</h2>
+    <p class="intro">对应自主实验第三部分。用 Verilog 实现数字输入、运算控制、加减乘除与平方根，以及二进制结果到十进制 BCD 的转换，并增加实验箱八位数码管显示。报告以“自主实验／最终实现／calculator／calculator”中的工程为准。U1 处理输入，U2 做运算，U3 处理结果，模块之间用数据、单拍使能和忙状态交接。</p>
+    <div class="device">
+        <div class="chassis">
+          <div class="screen">
+            <p id="expr" aria-live="polite">0</p>
+            <div class="digits" id="calcDigits"></div>
+            <p class="caption" id="segCaption">输入 · 与板上预览相同，不足 8 位前面补 0</p>
+          </div>
+          <div class="keys">
+            <button type="button" class="ac" data-k="ac">AC</button>
+            <button type="button" class="op" data-k="s">√</button>
+            <button type="button" class="op" data-k="/">÷</button>
+            <button type="button" class="op" data-k="*">×</button>
+            <button type="button" data-k="7">7</button>
+            <button type="button" data-k="8">8</button>
+            <button type="button" data-k="9">9</button>
+            <button type="button" class="op" data-k="-">−</button>
+            <button type="button" data-k="4">4</button>
+            <button type="button" data-k="5">5</button>
+            <button type="button" data-k="6">6</button>
+            <button type="button" class="op" data-k="+">+</button>
+            <button type="button" data-k="1">1</button>
+            <button type="button" data-k="2">2</button>
+            <button type="button" data-k="3">3</button>
+            <button type="button" class="eq" data-k="=">=</button>
+            <button type="button" data-k="0" style="grid-column: span 4">0</button>
+          </div>
+          <div class="examples">
+            <button type="button" data-demo="sub">8−12</button>
+            <button type="button" data-demo="mul34">12×34</button>
+            <button type="button" data-demo="9/2">9÷2</button>
+            <button type="button" data-demo="sqrt9">√9</button>
+            <button type="button" data-demo="sqrt2">√2</button>
+            <button type="button" data-demo="div0">7÷0</button>
+            <button type="button" data-demo="mul">八位平方</button>
+          </div>
+        </div>
+        <p class="caption">这块键盘把矩阵数字键和七路功能键放在一起，用来对照报告里的预期。板上两者是分开接线的。</p>
+    </div>
+    <div>
+        <ul class="facts">
+          <li><b>输入。</b>每个操作数最多 8 位，范围 0～99,999,999。0～9 用 4×4 矩阵键盘，AC、√、÷、×、−、+、= 用七路独立功能键。每行约驻留 250 μs，四行约 1 ms 扫完一帧。稳定约 20 ms 后产生一次按下事件，长按不重复录入。满八位后忽略后续数字。开方在第一操作数后直接按 √。</li>
+          <li><b>运算。</b>编码为 0 加、1 减、2 乘、3 除、4 开方。乘法保留完整 54 位，可以放下 99,999,999² = 9,999,999,800,000,001。减法为负时最高位作符号，低 53 位存绝对值；正数乘法的第 53 位仍是数值。除法做 27 轮移位相减，除数为 0 时显示 EEEEEEEE。开方每次取两位，共 14 组。</li>
+          <li><b>小数与负号。</b>除法用余数乘 10 逐位扩展，9÷2 得到 4.500000。开方的小数把余数乘 100 再试根，√2 得到 1.414213。六位小数截断，不四舍五入。负减法的最高位 BCD 用 F 表示负号，数码管上只亮中间一横。</li>
+          <li><b>显示。</b>八位动态扫描。先显示整数低八位，需要时再显示高八位和负号；除法、开方再显示六位小数，左边补两个零。每页大约停 1 s。低八位页的个位小数点表示后面还有小数页。段选默认高电平点亮，数字 0 的段码是 1111110，位序为 {a,b,c,d,e,f,g}。</li>
+        </ul>
+        <h3 style="margin-top:22px">数据怎么走</h3>
+        <ul class="flow">
+          <li>矩阵键盘 + 7 个功能键<span>单键，20 ms 消抖</span></li>
+          <li>U1 输入状态机<span>DATA1 / DATA2 / ARITH</span></li>
+          <li>U2 算术<span>54 位，除零置错误</span></li>
+          <li>U3 转换<span>16 位 BCD + 6 位小数</span></li>
+          <li>8 位数码管<span>低位、高位、小数轮流</span></li>
+        </ul>
+        <p class="closing">已保存的仿真记录对 1+1=2 给出 PASS，并核对了操作数、54 位结果和 BCD。其余式子按报告中的预期对照：8−12 为负号与整数 4，12×34 为 408，√9 为 3.000000，7÷0 显示 EEEEEEEE。</p>
+    </div>
+  </section>
+  <p class="note">实验四对应 <code>traffic_light</code>。实验五对应 <code>calculator</code>。页面上的路口和键盘用来对照报告里的相位、配时和运算预期。</p>
+</main>
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <span>© 2026 1pxc</span>
+    <span>思考、构建、记录。</span>
+    <a href="https://github.com/1pxc" target="_blank" rel="noopener noreferrer">GitHub</a>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const SEG = {
+    "0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
+    "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg",
+    "-": "g", "E": "afgde", "F": "g", " ": ""
+  };
+
+  function control(event) {
+    const node = event.target.nodeType === 1 ? event.target : event.target.parentElement;
+    return node ? node.closest("button") : null;
+  }
+
+  function makeDigits(root, n) {
+    root.replaceChildren();
+    for (let i = 0; i < n; i++) {
+      const digit = document.createElement("div");
+      digit.className = "digit";
+      "abcdefg".split("").forEach(function (name) {
+        const seg = document.createElement("i");
+        seg.className = "seg " + name;
+        seg.dataset.seg = name;
+        digit.appendChild(seg);
+      });
+      const dp = document.createElement("i");
+      dp.className = "dp";
+      digit.appendChild(dp);
+      root.appendChild(digit);
+    }
+  }
+
+  function showDigits(root, text, dpOnLast) {
+    const chars = text.padStart(root.children.length, " ").slice(-root.children.length);
+    Array.from(root.children).forEach(function (digit, i) {
+      const on = SEG[chars[i]] || "";
+      Array.from(digit.children).forEach(function (seg) {
+        if (seg.classList.contains("dp")) {
+          seg.classList.toggle("on", !!(dpOnLast && i === root.children.length - 1));
+        } else {
+          seg.classList.toggle("on", on.includes(seg.dataset.seg));
+        }
+      });
+    });
+  }
+
+  const timerDigits = document.getElementById("timerDigits");
+  const calcDigits = document.getElementById("calcDigits");
+  makeDigits(timerDigits, 2);
+  makeDigits(calcDigits, 8);
+
+  const T = { aG: 25, aL: 10, aY: 5, bG: 10, bL: 5, bY: 5 };
+  const LIM = {
+    aG: [5, 60], aL: [0, 30], aY: [1, 9],
+    bG: [5, 60], bL: [0, 30], bY: [1, 9]
+  };
+  const ORDER = ["aG", "aL", "aY", "bG", "bL", "bY"];
+  const NAME = {
+    aG: "A 直行绿", aL: "A 左转", aY: "A 黄灯",
+    bG: "B 直行绿", bL: "B 左转", bY: "B 黄灯"
+  };
+
+  function phases() {
+    return [
+      ["A 绿", "A 直行绿灯", "G", "R", T.aG],
+      ["A 左", "A 左转", "L", "R", T.aL],
+      ["A 黄", "A 黄灯", "Y", "R", T.aY],
+      ["B 绿", "B 直行绿灯", "R", "G", T.bG],
+      ["B 左", "B 左转", "R", "L", T.bL],
+      ["B 黄", "B 黄灯", "R", "Y", T.bY]
+    ].filter(function (row) { return row[4] > 0; })
+      .map(function (row) {
+        return { short: row[0], name: row[1], a: row[2], b: row[3], dur: row[4] };
+      });
+  }
+
+  let idx = 0;
+  let cnt = T.aG;
+  let blink = false;
+  let emer = false;
+  let setting = false;
+  let sel = "aG";
+  let speed = 3;
+  let running = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let acc = 0;
+  let last = 0;
+
+  const phaseLabel = document.getElementById("phaseLabel");
+  const constraint = document.getElementById("constraint");
+  const bar = document.getElementById("bar");
+  const emerBtn = document.getElementById("emerBtn");
+  const setBtn = document.getElementById("setBtn");
+  const runBtn = document.getElementById("runBtn");
+  const params = document.getElementById("params");
+  const speedInput = document.getElementById("speed");
+  const speedVal = document.getElementById("speedVal");
+
+  ORDER.forEach(function (key) {
+    const row = document.createElement("div");
+    row.className = "param";
+    row.innerHTML =
+      '<button type="button" class="pick" data-key="' + key + '">' + NAME[key] + "</button>" +
+      '<b class="val" data-val="' + key + '">' + T[key] + "</b><span>秒</span>" +
+      '<button type="button" class="step" data-step="-1" data-key="' + key + '" aria-label="' + NAME[key] + '减 1 秒">−</button>' +
+      '<button type="button" class="step" data-step="1" data-key="' + key + '" aria-label="' + NAME[key] + '加 1 秒">+</button>';
+    params.appendChild(row);
+  });
+
+  function current() {
+    const list = phases();
+    if (idx >= list.length) idx = 0;
+    return list[idx];
+  }
+
+  function restart() {
+    idx = 0;
+    cnt = current().dur;
+    blink = false;
+    acc = 0;
+  }
+
+  function isLit(side, kind) {
+    const phase = current();
+    const role = (emer || setting) ? "R" : (side === "a" ? phase.a : phase.b);
+    if (kind !== role) return false;
+    if (setting && !emer) return true;
+    if (emer) return blink;
+    if (kind === "Y") return blink;
+    if (kind === "G" || kind === "L") return cnt > 5 || blink;
+    return true;
+  }
+
+  function paintBar() {
+    const list = phases();
+    bar.replaceChildren();
+    list.forEach(function (phase, i) {
+      const kind = phase.a === "R" ? phase.b : phase.a;
+      const cell = document.createElement("span");
+      cell.className = "k-" + kind + ((!setting && !emer && i === idx) ? " now" : "");
+      cell.style.flex = String(phase.dur);
+      cell.textContent = phase.short + " ";
+      const em = document.createElement("em");
+      em.textContent = String(phase.dur);
+      cell.appendChild(em);
+      bar.appendChild(cell);
+    });
+  }
+
+  function paintTraffic() {
+    document.querySelectorAll(".lamp").forEach(function (lamp) {
+      lamp.classList.toggle("on", isLit(lamp.dataset.side, lamp.dataset.kind));
+    });
+    const shown = setting ? T[sel] : cnt;
+    showDigits(timerDigits, String(shown).padStart(2, "0"), false);
+    const phase = current();
+    if (setting && emer) {
+      phaseLabel.textContent = "配时 · " + NAME[sel] + " · " + T[sel] + " 秒。紧急时红灯闪烁，倒计时不动";
+    } else if (setting) {
+      phaseLabel.textContent = "配时 · " + NAME[sel] + " · " + T[sel] + " 秒";
+    } else if (emer) {
+      phaseLabel.textContent = "紧急 · 两向红灯闪烁 · 倒计时停在 " + cnt;
+    } else {
+      phaseLabel.textContent = phase.name + " · 剩余 " + cnt + " 秒";
+    }
+    const redB = T.aG + T.aL + T.aY;
+    const redA = T.bG + T.bL + T.bY;
+    constraint.textContent = "A 方向有效 " + redB + " 秒，此时 B 为红灯；B 方向有效 " + redA + " 秒，此时 A 为红灯。完整周期 " + (redA + redB) + " 秒。数码管显示当前相位倒计时。";
+    document.querySelectorAll(".param").forEach(function (row) {
+      const key = row.querySelector(".pick").dataset.key;
+      row.querySelector("[data-val]").textContent = T[key];
+      row.querySelector(".pick").setAttribute("aria-pressed", setting && key === sel ? "true" : "false");
+      row.querySelectorAll(".step").forEach(function (btn) {
+        const next = T[key] + Number(btn.dataset.step);
+        btn.disabled = next < LIM[key][0] || next > LIM[key][1];
+      });
+    });
+    paintBar();
+    setBtn.setAttribute("aria-pressed", setting ? "true" : "false");
+    setBtn.textContent = setting ? "结束配时" : "配时";
+    emerBtn.setAttribute("aria-pressed", emer ? "true" : "false");
+    runBtn.textContent = running ? "暂停" : "继续";
+  }
+
+  function stepParam(key, dir) {
+    const next = T[key] + dir;
+    if (next < LIM[key][0] || next > LIM[key][1]) return;
+    if (!setting) setting = true;
+    sel = key;
+    T[key] = next;
+    paintTraffic();
+  }
+
+  params.addEventListener("click", function (event) {
+    const node = event.target.nodeType === 1 ? event.target : event.target.parentElement;
+    const pick = node && node.closest(".pick");
+    const step = node && node.closest(".step");
+    if (pick) {
+      setting = true;
+      sel = pick.dataset.key;
+      paintTraffic();
+    } else if (step) {
+      stepParam(step.dataset.key, Number(step.dataset.step));
+    }
+  });
+
+  emerBtn.addEventListener("click", function () {
+    emer = !emer;
+    paintTraffic();
+  });
+  setBtn.addEventListener("click", function () {
+    setting = !setting;
+    if (!setting) restart();
+    paintTraffic();
+  });
+  runBtn.addEventListener("click", function () {
+    running = !running;
+    last = 0;
+    paintTraffic();
+  });
+  speedInput.addEventListener("input", function () {
+    speed = Number(speedInput.value);
+    speedVal.textContent = speed + "×";
+  });
+
+  function second() {
+    if (cnt > 1) cnt -= 1;
+    else {
+      const list = phases();
+      idx = (idx + 1) % list.length;
+      cnt = list[idx].dur;
+    }
+  }
+
+  function frame(now) {
+    if (!last) last = now;
+    const dt = Math.min(80, now - last);
+    last = now;
+    if (running) {
+      acc += dt * speed;
+      let moved = false;
+      while (acc >= 500) {
+        acc -= 500;
+        blink = !blink;
+        moved = true;
+        if (!emer && !setting) second();
+      }
+      if (moved) paintTraffic();
+    }
+    requestAnimationFrame(frame);
+  }
+
+  paintTraffic();
+  requestAnimationFrame(frame);
+
+  let a = 0n;
+  let b = 0n;
+  let op = null;
+  let phase = "first";
+  let digits = 0;
+  let resultText = "0";
+  let resultPages = null;
+  let pageIdx = 0;
+  let pageTimer = null;
+  const expr = document.getElementById("expr");
+  const segCaption = document.getElementById("segCaption");
+  const SYM = { "+": "＋", "-": "−", "*": "×", "/": "÷" };
+
+  function isqrt(n) {
+    if (n < 2n) return n;
+    let x = n;
+    let y = (x + 1n) / 2n;
+    while (y < x) {
+      x = y;
+      y = (x + n / x) / 2n;
+    }
+    return x;
+  }
+
+  function fracDiv(rem, den) {
+    let out = "";
+    for (let i = 0; i < 6; i++) {
+      rem *= 10n;
+      out += (rem / den).toString();
+      rem %= den;
+    }
+    return out;
+  }
+
+  function fracSqrt(n, root) {
+    let rem = n - root * root;
+    let scaledRoot = root;
+    let out = "";
+    for (let i = 0; i < 6; i++) {
+      const scaled = rem * 100n;
+      let digit = 9n;
+      let cand = 0n;
+      while (true) {
+        cand = (scaledRoot * 20n + digit) * digit;
+        if (scaled >= cand || digit === 0n) break;
+        digit -= 1n;
+      }
+      out += digit.toString();
+      rem = scaled - cand;
+      scaledRoot = scaledRoot * 10n + digit;
+    }
+    return out;
+  }
+
+  function pack(value, decimal, frac) {
+    if (value < 0n) return { neg: true, int: -value, decimal: decimal, frac: frac || "" };
+    return { neg: false, int: value, decimal: decimal, frac: frac || "" };
+  }
+
+  function calculate(x, y, which) {
+    if (which === "+") return pack(x + y, false);
+    if (which === "-") return pack(x - y, false);
+    if (which === "*") return pack(x * y, false);
+    if (which === "/") {
+      if (y === 0n) return { error: true };
+      const neg = (x < 0n) !== (y < 0n);
+      const ax = x < 0n ? -x : x;
+      const ay = y < 0n ? -y : y;
+      return { neg: neg, int: ax / ay, decimal: true, frac: fracDiv(ax % ay, ay) };
+    }
+    if (x < 0n) return { error: true };
+    const root = isqrt(x);
+    return { neg: false, int: root, decimal: true, frac: fracSqrt(x, root) };
+  }
+
+  function boardPages(result) {
+    if (result.error) return [{ kind: "错误", text: "EEEEEEEE", dp: false }];
+    const mag = result.int.toString();
+    const all = result.neg
+      ? ("F" + mag.padStart(15, "0").slice(-15))
+      : mag.padStart(16, "0").slice(-16);
+    const high = all.slice(0, 8);
+    const low = all.slice(8);
+    const pages = [{ kind: "低 8 位", text: low, dp: !!result.decimal }];
+    if (high.split("").some(function (ch) { return ch !== "0"; })) {
+      pages.push({ kind: "高 8 位", text: high, dp: false });
+    }
+    if (result.decimal) pages.push({ kind: "小数页", text: "00" + result.frac, dp: false });
+    return pages;
+  }
+
+  function previewPages() {
+    const value = phase === "second" ? b : a;
+    const mag = (value < 0n ? -value : value).toString().padStart(8, "0").slice(-8);
+    return [{ kind: "输入", text: mag, dp: false }];
+  }
+
+  function currentPages() {
+    if (phase === "result" || phase === "error") return resultPages || previewPages();
+    return previewPages();
+  }
+
+  function restartPageTimer() {
+    clearInterval(pageTimer);
+    pageTimer = null;
+    pageIdx = 0;
+    if (currentPages().length > 1) {
+      pageTimer = setInterval(function () {
+        pageIdx = (pageIdx + 1) % currentPages().length;
+        paintCalc();
+      }, 1000);
+    }
+  }
+
+  function paintCalc() {
+    const pages = currentPages();
+    if (pageIdx >= pages.length) pageIdx = 0;
+    const page = pages[pageIdx];
+    if (phase === "error") expr.textContent = "EEEEEEEE";
+    else if (phase === "result") expr.textContent = resultText;
+    else if (phase === "second") expr.textContent = a.toString() + " " + SYM[op] + (digits ? " " + b.toString() : "");
+    else expr.textContent = a.toString();
+    showDigits(calcDigits, page.text, page.dp);
+    if (phase === "error") segCaption.textContent = "除零。八位都是 E，按 AC 清除";
+    else if (phase === "result") {
+      segCaption.textContent = pages.length > 1
+        ? ("板上这一页是" + page.kind + "，每秒换一页")
+        : "结果放得进低 8 位";
+    } else segCaption.textContent = "输入 · 与板上预览相同，不足 8 位前面补 0";
+  }
+
+  function applyResult(result) {
+    if (result.error) {
+      phase = "error";
+      resultText = "EEEEEEEE";
+      resultPages = boardPages(result);
+    } else {
+      resultText = (result.neg ? "-" : "") + result.int.toString() + (result.decimal ? "." + result.frac : "");
+      a = result.neg ? -result.int : result.int;
+      b = 0n;
+      op = null;
+      digits = 0;
+      phase = "result";
+      resultPages = boardPages(result);
+    }
+    restartPageTimer();
+    paintCalc();
+  }
+
+  function inputDigit(ch) {
+    if (phase === "error") return;
+    if (phase === "result") {
+      phase = "first";
+      a = 0n;
+      digits = 0;
+      op = null;
+      resultPages = null;
+      clearInterval(pageTimer);
+      pageTimer = null;
+    }
+    if (digits >= 8) return;
+    const d = BigInt(ch);
+    if (phase === "second") b = digits === 0 ? d : b * 10n + d;
+    else a = digits === 0 ? d : a * 10n + d;
+    digits += 1;
+    paintCalc();
+  }
+
+  function inputOp(next) {
+    if (phase === "error") return;
+    if (phase === "second" && op && digits > 0) {
+      const pending = calculate(a, b, op);
+      if (pending.error) {
+        applyResult(pending);
+        return;
+      }
+      a = pending.neg ? -pending.int : pending.int;
+    }
+    op = next;
+    phase = "second";
+    b = 0n;
+    digits = 0;
+    clearInterval(pageTimer);
+    pageTimer = null;
+    paintCalc();
+  }
+
+  function equals() {
+    if (phase === "error" || phase === "result" || !op) return;
+    applyResult(calculate(a, b, op));
+  }
+
+  function sqrtKey() {
+    if (phase === "error" || phase === "second") return;
+    applyResult(calculate(a, 0n, "sqrt"));
+  }
+
+  function ac() {
+    a = 0n;
+    b = 0n;
+    op = null;
+    phase = "first";
+    digits = 0;
+    resultText = "0";
+    resultPages = null;
+    clearInterval(pageTimer);
+    pageTimer = null;
+    pageIdx = 0;
+    paintCalc();
+  }
+
+  document.querySelector(".keys").addEventListener("click", function (event) {
+    const key = control(event);
+    if (!key) return;
+    const code = key.dataset.k;
+    if (code === "ac") ac();
+    else if (code === "s") sqrtKey();
+    else if (code === "=") equals();
+    else if ("0123456789".includes(code)) inputDigit(code);
+    else inputOp(code);
+  });
+
+  const DEMOS = {
+    "9/2": ["9", "/", "2", "="],
+    sqrt2: ["2", "s"],
+    sqrt9: ["9", "s"],
+    sub: ["8", "-", "1", "2", "="],
+    mul34: ["1", "2", "*", "3", "4", "="],
+    mul: "99999999*99999999=".split(""),
+    div0: ["7", "/", "0", "="]
+  };
+  document.querySelector(".examples").addEventListener("click", function (event) {
+    const demo = control(event);
+    if (!demo) return;
+    ac();
+    DEMOS[demo.dataset.demo].forEach(function (step) {
+      if (step === "s") sqrtKey();
+      else if (step === "=") equals();
+      else if ("0123456789".includes(step)) inputDigit(step);
+      else inputOp(step);
+    });
+  });
+
+  window.addEventListener("keydown", function (event) {
+    if (event.target.matches("input, textarea")) return;
+    if (event.key >= "0" && event.key <= "9") inputDigit(event.key);
+    else if (event.key === "+") inputOp("+");
+    else if (event.key === "-") inputOp("-");
+    else if (event.key === "*") inputOp("*");
+    else if (event.key === "/") { event.preventDefault(); inputOp("/"); }
+    else if (event.key === "Enter" || event.key === "=") equals();
+    else if (event.key === "Escape") ac();
+    else if (event.key === "r" || event.key === "R") sqrtKey();
+  });
+
+  paintCalc();
+})();
+</script>
+</body>
+</html>
